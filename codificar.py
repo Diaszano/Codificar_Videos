@@ -45,7 +45,7 @@ def codificacaoDeFilmes() -> None:
                     nome    = arq[arq.index(')/')+2:];
                     tmp     = pasta+'tmp/';
                     tmpArq    = tmp+nome;
-                    if(os.path.isfile(arq)): # Estava dando erro sem esse if irei verificar depois
+                    if(os.path.isfile(arq)):
                         print('ffmpeg -i "'+arq+'" -c:v hevc_nvenc -c:a copy "'+tmpArq+'"'); 
                         if(os.path.getsize(arq) >= TAMANHO_MINIMO):
                             os.system('mkdir "'+tmp+'"');
