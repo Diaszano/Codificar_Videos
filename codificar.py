@@ -8,34 +8,37 @@ import csv
 #-----------------------
 TAMANHO_MINIMO=200;
 CODIFICADOR='HEVC'; # OPÇÕES ['HEVC','H265','H264']; Eu escolhi o hevc, pois ele faz o processo todo na minha placa de video.
-PASTAS=['/nfs/Servidor/Streaming/Filmes/',];
-ARQUIVO='./logCodificacao.csv';
+PASTAS_DE_FILMES=['/nfs/Streaming-HDD0/Filmes','/nfs/Streaming-HDD1/Filmes-HDD1','/nfs/Streaming-SSD/Filmes'];
+PASTAS_DE_SERIES=['/nfs/Streaming-HDD1/Séries','/nfs/Streaming-HDD2/Séries','/nfs/Streaming-SSD/Séries'];
+ARQUIVO='logCodificacao.csv';
+ARQUIVO_RESERVA='logReserva.csv'
 #-----------------------
 # FUNÇÕES
 #-----------------------
-def buscaFilmes(pasta):
+def buscaFilmes(pasta) -> list:
     arqMkv = [];
     arqMp4 = [];
     arqAvi = [];
+    i = 0;
     for diretorio, subpastas, arquivos in os.walk(pasta):
-        for dir, sub, arq in os.walk(diretorio):
-            for a in arq:
-                if '.mkv' in a:
-                    arqMkv.append(dir+'/'+a);
-                elif '.mp4' in a:
-                    arqMp4.append(dir+'/'+a);
-                elif '.avi' in a:
-                    arqAvi.append(dir+'/'+a);
+        if i >= 1:
+            for dir, sub, arq in os.walk(diretorio):
+                for a in arq:
+                    if '.mkv' in a:
+                        arqMkv.append(dir+'/'+a);
+                    elif '.mp4' in a:
+                        arqMp4.append(dir+'/'+a);
+                    elif '.avi' in a:
+                        arqAvi.append(dir+'/'+a);
+        i+=1;
     return [arqMkv,arqMp4,arqAvi];
-#-----------------------
-# Main()
-#-----------------------    
-if __name__ == '__main__':
-    for pasta in PASTAS:
-        [arqMkv,arqMp4,arqAvi] = buscaFilmes(pasta);
-        with open(ARQUIVO,'w',newline='') as file:
-            escrever = csv.writer(file);
-            escrever.writerow(['Filme','Pasta','Tamanho']);
+
+def codificacaoDeFilmes() -> None:
+    with open(ARQUIVO,'w',newline='') as file:
+        escrever = csv.writer(file);
+        escrever.writerow(['Filme','Pasta','Tamanho']);
+        for pasta in PASTAS_DE_FILMES:
+            [arqMkv,arqMp4,arqAvi] = buscaFilmes(pasta);
             for tipo in [arqMkv,arqMp4,arqAvi]:
                 for arq in tipo:
                     pasta   = arq[:arq.index(')/')+2];
@@ -57,6 +60,11 @@ if __name__ == '__main__':
                                 os.system('mv "'+tmpArq+'" "'+pasta+'"');
                         if(os.path.exists(tmp)):
                             os.system('rm -r "'+tmp+'"');
-                        linha = [];linha.append(nome);linha.append(pasta);linha.append(str(os.path.getsize(arq))); 
+                        linha = [];linha.append(nome);linha.append(pasta);linha.append(str(os.path.getsize(arq)));
                         escrever.writerow(linha);
+#-----------------------
+# Main()
+#-----------------------    
+if __name__ == '__main__':
+    codificacaoDeFilmes();
 #-----------------------
