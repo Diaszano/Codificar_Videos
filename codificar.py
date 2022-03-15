@@ -3,6 +3,8 @@
 #-----------------------
 import os
 import csv
+import CRUD as bd
+from dados import Banco as dzn
 #-----------------------
 # CONSTANTES
 #-----------------------
@@ -33,7 +35,14 @@ def buscaFilmes(pasta) -> list:
         i+=1;
     return [arqMkv,arqMp4,arqAvi];
 
-def codificacaoDeFilmes() -> None:
+def correcaoFilmes(filme:str = '') -> list:
+    pasta   = filme[:filme.index(')/')+2];
+    nome    = filme[filme.index(')/')+2:len(filme)-4];
+    arquivo = filme[filme.index(')/')+2:];
+    imdb    = filme[filme.index('(tt')+1:filme.index(')/')];
+    return[pasta,nome,arquivo,imdb];
+
+def codificacaoDeFilmes_Locais() -> None:
     with open(ARQUIVO,'w',newline='') as file:
         escrever = csv.writer(file);
         escrever.writerow(['Filme','Pasta','Tamanho']);
@@ -62,9 +71,44 @@ def codificacaoDeFilmes() -> None:
                             os.system('rm -r "'+tmp+'"');
                         linha = [];linha.append(nome);linha.append(pasta);linha.append(str(os.path.getsize(arq)));
                         escrever.writerow(linha);
+
+def codificacaoDeFilmes_Banco(cursor,cnxn) -> None:
+    comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY pasta LIMIT 1;";
+    retorno = bd.read(comando=comando,cursor=cursor);
+    while retorno != []:
+        retorno         = retorno[0];
+        pasta           = retorno[0];
+        arquivo         = retorno[1];
+        imdb            = retorno[2]; 
+        localDoArquivo  = str(pasta)+str(arquivo);
+        tmp             = pasta+'tmp/';
+        tmpArq          = tmp+arquivo;
+        if(os.path.isfile(localDoArquivo)):
+            comando = f'UPDATE filmes SET codificado=2 WHERE imdb="{imdb}";';
+            bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
+            print('ffmpeg -i "'+localDoArquivo+'" -c:v hevc_nvenc -c:a copy "'+tmpArq+'"'); 
+            if(os.path.getsize(localDoArquivo) >= TAMANHO_MINIMO):
+                os.system('mkdir "'+tmp+'"');
+                if(CODIFICADOR == 'HEVC'):
+                    os.system('ffmpeg -i "'+localDoArquivo+'" -c:v hevc_nvenc -c:a copy "'+tmpArq+'"');
+                elif(CODIFICADOR == 'H265'):
+                    os.system('ffmpeg -i "'+localDoArquivo+'" -c:v libx265 -c:a copy "'+tmpArq+'"');
+                else:
+                    os.system('ffmpeg -i "'+localDoArquivo+'" -vcodec h264 -acodec mp3 "'+tmpArq+'"');
+            if(os.path.isfile(tmpArq)):
+                if((os.path.getsize(tmpArq) <= os.path.getsize(localDoArquivo)) and (os.path.getsize(tmpArq) > TAMANHO_MINIMO)):
+                    os.system('mv "'+tmpArq+'" "'+pasta+'"');
+            if(os.path.exists(tmp)):
+                os.system('rm -r "'+tmp+'"');
+            comando = f'UPDATE filmes.filmes SET tamanho="{os.path.getsize(localDoArquivo)}", codificado=3 WHERE imdb="{imdb}";';
+            bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
+        comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY pasta LIMIT 1;";
+        retorno = bd.read(comando=comando,cursor=cursor);
 #-----------------------
 # Main()
 #-----------------------    
 if __name__ == '__main__':
-    codificacaoDeFilmes();
+    [cnxn,cursor] = bd.conexao(host=dzn.host,user=dzn.user,password=dzn.password,database=dzn.databaseFilmes);
+    codificacaoDeFilmes_Banco(cursor,cnxn);
+    bd.desconexao(cnxn=cnxn,cursor=cursor);
 #-----------------------
