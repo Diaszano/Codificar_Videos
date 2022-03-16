@@ -78,7 +78,7 @@ def codificacaoDeFilmes_Locais() -> None:
                     escrever.writerow(linha);
 
 def codificacaoDeFilmes_Banco(cursor,cnxn) -> None:
-    comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho DESC LIMIT 1;";
+    comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho LIMIT 1;";
     retorno = bd.read(comando=comando,cursor=cursor);
     while retorno != []:
         retorno                 = retorno[0];
@@ -112,7 +112,7 @@ def codificacaoDeFilmes_Banco(cursor,cnxn) -> None:
                 os.system(f'rm -r "{tmpPasta}"');
             comando = f'UPDATE filmes.filmes SET tamanho="{os.path.getsize(localDoArquivo)}", codificado=1 WHERE imdb="{imdb}";';
             bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
-        comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho DESC LIMIT 1;";
+        comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho LIMIT 1;";
         retorno = bd.read(comando=comando,cursor=cursor);
 #-----------------------
 # Main()
