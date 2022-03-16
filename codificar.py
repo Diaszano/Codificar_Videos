@@ -118,6 +118,7 @@ def codificacaoDeFilmes_Locais() -> None:
                     escrever.writerow(linha);
 
 def codificacaoDeFilmes_Banco(cursor,cnxn) -> None:
+    ordem = 'DESC';
     comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho LIMIT 1;";
     retorno = bd.read(comando=comando,cursor=cursor);
     while retorno != []:
@@ -137,6 +138,7 @@ def codificacaoDeFilmes_Banco(cursor,cnxn) -> None:
             if(os.path.getsize(f'{localDoArquivo}') >= TAMANHO_MINIMO):
                 os.system(f'mkdir "{tmpPasta}"');
                 if(CODIFICADOR == 'HEVC'):
+                    ordem = '';
                     linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v hevc_nvenc -c:a copy "{tmpArq}"';
                 elif(CODIFICADOR == 'H265'):
                     linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v libx265 -c:a copy "{tmpArq}"';
@@ -152,7 +154,7 @@ def codificacaoDeFilmes_Banco(cursor,cnxn) -> None:
                 os.system(f'rm -r "{tmpPasta}"');
             comando = f'UPDATE filmes.filmes SET tamanho="{os.path.getsize(localDoArquivo)}", codificado=1 WHERE imdb="{imdb}";';
             bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
-        comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho LIMIT 1;";
+        comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho {ordem} LIMIT 1;";
         retorno = bd.read(comando=comando,cursor=cursor);
 #-----------------------
 # Main()
