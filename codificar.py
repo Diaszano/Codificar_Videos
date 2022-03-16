@@ -64,6 +64,26 @@ def limparPastasTmp(cursor,cnxn):
         comando = f'UPDATE filmes.filmes SET codificado={i} WHERE codificado={i+3};';
         bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
 
+def atualizarBanco(cursor,cnxn):
+    for pasta in PASTAS_DE_FILMES:
+        [arqMkv,arqMp4,arqAvi] = buscaFilmes(pasta);
+        for tipo in [arqMkv,arqMp4,arqAvi]:
+            for arq in tipo:
+                [pasta_filme,nome,arquivo,imdb,tmpPasta,tmpArq,localDoArquivo] = correcaoFilmes(arq);
+                comando = f"SELECT ta filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho LIMIT 1;";
+                retorno = bd.read(comando=comando,cursor=cursor);
+                if retorno != []:
+                    retorno = int(retorno[0]);
+                    if retorno == 0:
+                        comando = f'''  UPDATE filmes.filmes SET tamanho="{os.path.getsize(localDoArquivo)}", 
+                                        pasta="{pasta_filme}", arquivo="{arquivo}" WHERE imdb="{imdb}";''';
+                        bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
+                else:
+                    comando = f'''  INSERT INTO filmes.filmes (nome, imdb, tamanho, codificado, pasta, arquivo)
+                                    VALUES("{nome}","{imdb}",{os.path.getsize(localDoArquivo)}, 0,"{pasta_filme}","{arquivo}");''';
+                    bd.create(comando=comando,cnxn=cnxn,cursor=cursor);
+
+
 def codificacaoDeFilmes_Locais() -> None:
     with open(ARQUIVO,'w',newline='') as file:
         escrever = csv.writer(file);
