@@ -91,13 +91,14 @@ def codificacaoDeFilmes_Banco(cursor,cnxn) -> None:
             bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
             linhaDeComando = '';
             if(os.path.getsize(f'{localDoArquivo}') >= TAMANHO_MINIMO):
-                os.system(f'mkdir {tmpPasta}');
+                os.system(f'mkdir "{tmpPasta}"');
                 if(CODIFICADOR == 'HEVC'):
                     linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v hevc_nvenc -c:a copy "{tmpArq}"';
                 elif(CODIFICADOR == 'H265'):
                     linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v libx265 -c:a copy "{tmpArq}"';
                 else:
                     linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -vcodec h264 -acodec mp3 "{tmpArq}"';
+                os.system("clear");
                 print(linhaDeComando);
                 os.system(linhaDeComando);
             if(os.path.isfile(tmpArq)):
