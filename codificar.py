@@ -18,7 +18,7 @@ ARQUIVO_RESERVA='logReserva.csv'
 #-----------------------
 # FUNÇÕES
 #-----------------------
-def buscaFilmes(pasta:str) -> list:
+def buscaFilmes(pasta:str = '') -> list:
     arqMkv = [];
     arqMp4 = [];
     arqAvi = [];
@@ -164,6 +164,6 @@ def codificacaoDeFilmes_Banco(cursor,cnxn,maior:bool = True) -> None:
 #-----------------------    
 if __name__ == '__main__':
     [cnxn,cursor] = bd.conexao(host=dzn.host,user=dzn.user,password=dzn.password,database=dzn.databaseFilmes);
-    codificacaoDeFilmes_Banco(cursor,cnxn);
+    codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor);
     bd.desconexao(cnxn=cnxn,cursor=cursor);
 #-----------------------
