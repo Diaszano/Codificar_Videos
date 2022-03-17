@@ -3,6 +3,7 @@
 #-----------------------
 import os
 import csv
+from pickle import TRUE
 import CRUD as bd
 from dados import Banco as dzn
 #-----------------------
@@ -17,7 +18,7 @@ ARQUIVO_RESERVA='logReserva.csv'
 #-----------------------
 # FUNÇÕES
 #-----------------------
-def buscaFilmes(pasta) -> list:
+def buscaFilmes(pasta:str) -> list:
     arqMkv = [];
     arqMp4 = [];
     arqAvi = [];
@@ -117,9 +118,12 @@ def codificacaoDeFilmes_Locais() -> None:
                     linha = [nome,arquivo,imdb,pasta_filme,str(os.path.getsize(localDoArquivo))];
                     escrever.writerow(linha);
 
-def codificacaoDeFilmes_Banco(cursor,cnxn) -> None:
-    ordem = 'DESC';
-    comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho LIMIT 1;";
+def codificacaoDeFilmes_Banco(cursor,cnxn,maior:bool = True) -> None:
+    if maior:
+        ordem = 'DESC';
+    else:
+        ordem = '';
+    comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho {ordem} LIMIT 1;";
     retorno = bd.read(comando=comando,cursor=cursor);
     while retorno != []:
         retorno                 = retorno[0];
@@ -138,7 +142,6 @@ def codificacaoDeFilmes_Banco(cursor,cnxn) -> None:
             if(os.path.getsize(f'{localDoArquivo}') >= TAMANHO_MINIMO):
                 os.system(f'mkdir "{tmpPasta}"');
                 if(CODIFICADOR == 'HEVC'):
-                    ordem = '';
                     linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v hevc_nvenc -c:a copy "{tmpArq}"';
                 elif(CODIFICADOR == 'H265'):
                     linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v libx265 -c:a copy "{tmpArq}"';
