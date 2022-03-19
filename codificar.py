@@ -10,7 +10,7 @@ from dados import Banco as dzn
 # CONSTANTES
 #-----------------------
 TAMANHO_MINIMO=200;
-CODIFICADOR='HEVC'; # OPÇÕES ['HEVC','H265','H264']; Eu escolhi o hevc, pois ele faz o processo todo na minha placa de video.
+CODIFICADOR='H264'; # OPÇÕES ['HEVC','H265','H264']; Eu escolhi o hevc, pois ele faz o processo todo na minha placa de video.
 PASTAS_DE_FILMES=['/nfs/Streaming-HDD0/Filmes','/nfs/Streaming-HDD1/Filmes-HDD1','/nfs/Streaming-SSD/Filmes'];
 PASTAS_DE_SERIES=['/nfs/Streaming-HDD1/Séries','/nfs/Streaming-HDD2/Séries','/nfs/Streaming-SSD/Séries'];
 ARQUIVO='logCodificacao.csv';
@@ -53,10 +53,9 @@ def limparPastasTmp(cursor,cnxn):
             retorno                 = retorno[0];
             [pasta,arquivo,imdb]    = [retorno[0],retorno[1],retorno[2]];
             tmpPasta                = f'{pasta}tmp/';
-            print(pasta,arquivo,imdb)
             if(os.path.exists(f'{tmpPasta}')):
                 os.system(f'rm -r "{tmpPasta}"');
-                print("Pasta excluida");
+                print(f"Pasta {tmpPasta} excluída");
             comando = f'UPDATE filmes.filmes SET codificado={i+3} WHERE imdb="{imdb}";';
             bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
             comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = {i} and tamanho != 0 ORDER BY tamanho LIMIT 1;";
@@ -110,7 +109,7 @@ def codificacaoDeFilmes_Locais() -> None:
                             print(linhaDeComando);
                             os.system(linhaDeComando);
                         if(os.path.isfile(tmpArq)):
-                            if((os.path.getsize(tmpArq) <= os.path.getsize(localDoArquivo)) and (os.path.getsize(tmpArq) > TAMANHO_MINIMO)):
+                            if(((os.path.getsize(tmpArq) <= os.path.getsize(localDoArquivo)) or (CODIFICADOR == 'H264')) and ((os.path.getsize(tmpArq) > TAMANHO_MINIMO))):
                                 os.system(f'mv "{tmpArq}" "{pasta_filme}"');
                         if(os.path.exists(f'{tmpPasta}')):
                             os.system(f'rm -r "{tmpPasta}"');
@@ -146,12 +145,12 @@ def codificacaoDeFilmes_Banco(cursor,cnxn,maior:bool = True) -> None:
                 elif(CODIFICADOR == 'H265'):
                     linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v libx265 -c:a copy "{tmpArq}"';
                 else:
-                    linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -vcodec h264 -acodec mp3 "{tmpArq}"';
+                    linhaDeComando = f'ffmpeg -hwaccel cuda -hwaccel_output_format cuda -i "{localDoArquivo}" -c:v h264_nvenc -crf 20 -c:a copy "{tmpArq}"';
                 os.system("clear");
                 print(linhaDeComando);
                 os.system(linhaDeComando);
             if(os.path.isfile(tmpArq)):
-                if((os.path.getsize(tmpArq) <= os.path.getsize(localDoArquivo)) and (os.path.getsize(tmpArq) > TAMANHO_MINIMO)):
+                if(((os.path.getsize(tmpArq) <= os.path.getsize(localDoArquivo)) or (CODIFICADOR == 'H264')) and ((os.path.getsize(tmpArq) > TAMANHO_MINIMO))):
                     os.system(f'mv "{tmpArq}" "{pasta}"');
             if(os.path.exists(f'{tmpPasta}')):
                 os.system(f'rm -r "{tmpPasta}"');
@@ -164,6 +163,8 @@ def codificacaoDeFilmes_Banco(cursor,cnxn,maior:bool = True) -> None:
 #-----------------------    
 if __name__ == '__main__':
     [cnxn,cursor] = bd.conexao(host=dzn.host,user=dzn.user,password=dzn.password,database=dzn.databaseFilmes);
-    codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor);
+    # codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor);
+    limparPastasTmp(cursor,cnxn);
+    # atualizarBanco(cursor,cnxn);
     bd.desconexao(cnxn=cnxn,cursor=cursor);
 #-----------------------
