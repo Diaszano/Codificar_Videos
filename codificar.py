@@ -83,6 +83,24 @@ def atualizarBanco(cursor,cnxn):
                                     VALUES("{nome}","{imdb}",{os.path.getsize(localDoArquivo)}, 0,"{pasta_filme}","{arquivo}");''';
                     bd.create(comando=comando,cnxn=cnxn,cursor=cursor);
 
+def codificacao(localDoArquivo:str = '',tmpArq:str = '',pasta:str = '',tmpPasta:str = '') -> None:
+    linhaDeComando = '';
+    if(os.path.getsize(f'{localDoArquivo}') >= TAMANHO_MINIMO):
+        os.system(f'mkdir "{tmpPasta}"');
+        if(CODIFICADOR == 'HEVC'):
+            linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v hevc_nvenc -c:a copy "{tmpArq}"';
+        elif(CODIFICADOR == 'H265'):
+            linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v libx265 -c:a copy "{tmpArq}"';
+        else:
+            linhaDeComando = f'''ffmpeg -hwaccel cuda -hwaccel_output_format cuda -i "{localDoArquivo}" -c:v h264_nvenc -crf 20 -c:a copy "{tmpArq}"''';
+        os.system("clear");
+        print(linhaDeComando);
+        os.system(linhaDeComando);
+    if(os.path.isfile(tmpArq)):
+        if(os.path.getsize(tmpArq) <= os.path.getsize(localDoArquivo) and (os.path.getsize(tmpArq) > TAMANHO_MINIMO)):
+            os.system(f'mv "{tmpArq}" "{pasta}"');
+    if(os.path.exists(f'{tmpPasta}')):
+        os.system(f'rm -r "{tmpPasta}"');
 
 def codificacaoDeFilmes_Locais() -> None:
     with open(ARQUIVO,'w',newline='') as file:
@@ -93,28 +111,7 @@ def codificacaoDeFilmes_Locais() -> None:
             for tipo in [arqMkv,arqMp4,arqAvi]:
                 for arq in tipo:
                     [pasta_filme,nome,arquivo,imdb,tmpPasta,tmpArq,localDoArquivo] = correcaoFilmes(arq);
-                    if(os.path.isfile(localDoArquivo)):
-                        comando = f'UPDATE filmes SET codificado=2 WHERE imdb="{imdb}";';
-                        bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
-                        linhaDeComando = '';
-                        if(os.path.getsize(f'{localDoArquivo}') >= TAMANHO_MINIMO):
-                            os.system(f'mkdir "{tmpPasta}"');
-                            if(CODIFICADOR == 'HEVC'):
-                                linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v hevc_nvenc -c:a copy "{tmpArq}"';
-                            elif(CODIFICADOR == 'H265'):
-                                linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v libx265 -c:a copy "{tmpArq}"';
-                            else:
-                                linhaDeComando = f'''   ffmpeg -hwaccel cuda -hwaccel_output_format cuda  
-                                                        -i "{localDoArquivo}" -c:v h264_nvenc -crf 20 -c:a 
-                                                        copy "{tmpArq}"''';
-                            os.system("clear");
-                            print(linhaDeComando);
-                            os.system(linhaDeComando);
-                        if(os.path.isfile(tmpArq)):
-                            if(os.path.getsize(tmpArq) <= os.path.getsize(localDoArquivo) and (os.path.getsize(tmpArq) > TAMANHO_MINIMO)):
-                                os.system(f'mv "{tmpArq}" "{pasta_filme}"');
-                        if(os.path.exists(f'{tmpPasta}')):
-                            os.system(f'rm -r "{tmpPasta}"');
+                    codificacao(localDoArquivo=localDoArquivo,tmpArq=tmpArq,pasta=pasta_filme,tmpPasta=tmpPasta);
                     escrever.writerow(['Nome','Arquivo','imdb','Pasta','Tamanho']);
                     linha = [nome,arquivo,imdb,pasta_filme,str(os.path.getsize(localDoArquivo))];
                     escrever.writerow(linha);
@@ -139,23 +136,7 @@ def codificacaoDeFilmes_Banco(cursor,cnxn,maior:bool = True) -> None:
         if(os.path.isfile(localDoArquivo)):
             comando = f'UPDATE filmes SET codificado=2 WHERE imdb="{imdb}";';
             bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
-            linhaDeComando = '';
-            if(os.path.getsize(f'{localDoArquivo}') >= TAMANHO_MINIMO):
-                os.system(f'mkdir "{tmpPasta}"');
-                if(CODIFICADOR == 'HEVC'):
-                    linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v hevc_nvenc -c:a copy "{tmpArq}"';
-                elif(CODIFICADOR == 'H265'):
-                    linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v libx265 -c:a copy "{tmpArq}"';
-                else:
-                    linhaDeComando = f'''ffmpeg -hwaccel cuda -hwaccel_output_format cuda -i "{localDoArquivo}" -c:v h264_nvenc -crf 20 -c:a copy "{tmpArq}"''';
-                os.system("clear");
-                print(linhaDeComando);
-                os.system(linhaDeComando);
-            if(os.path.isfile(tmpArq)):
-                if(os.path.getsize(tmpArq) <= os.path.getsize(localDoArquivo) and (os.path.getsize(tmpArq) > TAMANHO_MINIMO)):
-                    os.system(f'mv "{tmpArq}" "{pasta}"');
-            if(os.path.exists(f'{tmpPasta}')):
-                os.system(f'rm -r "{tmpPasta}"');
+            codificacao(localDoArquivo=localDoArquivo,tmpArq=tmpArq,pasta=pasta,tmpPasta=tmpPasta);
             comando = f'UPDATE filmes.filmes SET tamanho="{os.path.getsize(localDoArquivo)}", codificado=1 WHERE imdb="{imdb}";';
             bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
         comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho {ordem} LIMIT 1;";
