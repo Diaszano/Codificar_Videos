@@ -146,6 +146,6 @@ def codificacaoDeFilmes_Banco(cursor,cnxn,maior:bool = True) -> None:
 #-----------------------    
 if __name__ == '__main__':
     [cnxn,cursor] = bd.conexao(host=dzn.host,user=dzn.user,password=dzn.password,database=dzn.databaseFilmes);
-    codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor);
+    codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor,maior=False);
     bd.desconexao(cnxn=cnxn,cursor=cursor);
 #-----------------------
