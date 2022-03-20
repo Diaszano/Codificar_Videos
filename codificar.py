@@ -97,7 +97,7 @@ def codificacao(localDoArquivo:str = '',tmpArq:str = '',pasta:str = '',tmpPasta:
         print(linhaDeComando);
         os.system(linhaDeComando);
     if(os.path.isfile(tmpArq)):
-        if(os.path.getsize(tmpArq) <= os.path.getsize(localDoArquivo) and (os.path.getsize(tmpArq) > TAMANHO_MINIMO)):
+        if(((os.path.getsize(tmpArq) <= os.path.getsize(localDoArquivo)) or (CODIFICADOR == 'H264')) and (os.path.getsize(tmpArq) > TAMANHO_MINIMO)):
             os.system(f'mv "{tmpArq}" "{pasta}"');
     if(os.path.exists(f'{tmpPasta}')):
         os.system(f'rm -r "{tmpPasta}"');
