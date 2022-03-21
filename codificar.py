@@ -14,7 +14,8 @@ CODIFICADOR='H264'; # OPÇÕES ['HEVC','H265','H264'];
 PASTAS_DE_FILMES=['/nfs/Streaming-HDD0/Filmes','/nfs/Streaming-HDD1/Filmes-HDD1','/nfs/Streaming-SSD/Filmes'];
 PASTAS_DE_SERIES=['/nfs/Streaming-HDD1/Séries','/nfs/Streaming-HDD2/Séries','/nfs/Streaming-SSD/Séries'];
 ARQUIVO='logCodificacao.csv';
-ARQUIVO_RESERVA='logReserva.csv'
+ARQUIVO_RESERVA='logReserva.csv';
+ARQUIVO_BKP='/home/diaszano/Downloads/Filmes.csv';
 #-----------------------
 # FUNÇÕES
 #-----------------------
@@ -64,7 +65,7 @@ def limparPastasTmp(cursor,cnxn):
         comando = f'UPDATE filmes.filmes SET codificado={i} WHERE codificado={i+3};';
         bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
 
-def atualizarBanco(cursor,cnxn):
+def atualizarBancoLocal(cursor,cnxn):
     for pasta in PASTAS_DE_FILMES:
         [arqMkv,arqMp4,arqAvi] = buscaFilmes(pasta);
         for tipo in [arqMkv,arqMp4,arqAvi]:
@@ -86,6 +87,30 @@ def atualizarBanco(cursor,cnxn):
                     comando = f'''  INSERT INTO filmes.filmes (nome, imdb, tamanho, codificado, pasta, arquivo)
                                     VALUES("{nome}","{imdb}",{os.path.getsize(localDoArquivo)}, 0,"{pasta_filme}","{arquivo}");''';
                     bd.create(comando=comando,cnxn=cnxn,cursor=cursor);
+
+def atualizarBancoCsv(cursor,cnxn):
+    with open(ARQUIVO_BKP, 'r') as ficheiro:
+        reader = csv.reader(ficheiro)
+        i = 0;
+        for linha in reader:
+            if i > 0:
+                [nome,imdb,torrent] = [linha[0],linha[3],linha[4]]
+                comando = f'SELECT tamanho from filmes WHERE  imdb="{imdb}";';
+                retorno = bd.read(comando=comando,cursor=cursor);
+                if retorno != []:
+                    retorno = retorno[0];
+                    tmh = int(retorno[0]);
+                    if tmh > TAMANHO_MINIMO:
+                        comando = f'''  UPDATE filmes.filmes SET torrent="{torrent}" WHERE imdb="{imdb}";''';
+                        bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
+                    else:
+                        comando = f'''  UPDATE filmes.filmes SET tamanho=0, codificado=0, pasta=NULL, arquivo=NULL,torrent="{torrent}" WHERE imdb="{imdb}";''';
+                        bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
+                else:
+                    comando = f'''  INSERT INTO filmes.filmes (nome, imdb, tamanho, codificado, pasta, arquivo,torrent)
+                                    VALUES("{nome}","{imdb}",0, 0,NULL,NULL,"{torrent}");''';
+                    bd.create(comando=comando,cnxn=cnxn,cursor=cursor);
+            i+=1;
 
 def codificacao(localDoArquivo:str = '',tmpArq:str = '',pasta:str = '',tmpPasta:str = '') -> None:
     linhaDeComando = '';
@@ -151,6 +176,6 @@ def codificacaoDeFilmes_Banco(cursor,cnxn,maior:bool = True) -> None:
 if __name__ == '__main__':
     [cnxn,cursor] = bd.conexao(host=dzn.host,user=dzn.user,password=dzn.password,database=dzn.databaseFilmes);
     codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor);
-    # atualizarBanco(cursor,cnxn);
+    # atualizarBancoCsv(cursor,cnxn);
     bd.desconexao(cnxn=cnxn,cursor=cursor);
 #-----------------------
