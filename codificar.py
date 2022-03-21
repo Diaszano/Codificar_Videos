@@ -70,13 +70,17 @@ def atualizarBanco(cursor,cnxn):
         for tipo in [arqMkv,arqMp4,arqAvi]:
             for arq in tipo:
                 [pasta_filme,nome,arquivo,imdb,tmpPasta,tmpArq,localDoArquivo] = correcaoFilmes(arq);
-                comando = f"SELECT ta filmes WHERE  codificado = 0 and tamanho != 0 ORDER BY tamanho LIMIT 1;";
+                comando = f'SELECT tamanho from filmes WHERE  imdb="{imdb}";';
                 retorno = bd.read(comando=comando,cursor=cursor);
                 if retorno != []:
-                    retorno = int(retorno[0]);
-                    if retorno == 0:
-                        comando = f'''  UPDATE filmes.filmes SET tamanho="{os.path.getsize(localDoArquivo)}", 
-                                        pasta="{pasta_filme}", arquivo="{arquivo}" WHERE imdb="{imdb}";''';
+                    retorno = retorno[0];
+                    tmh = int(retorno[0]);
+                    if tmh > TAMANHO_MINIMO:
+                        comando = f'''  UPDATE filmes.filmes SET tamanho={os.path.getsize(localDoArquivo)},pasta="{pasta_filme}", 
+                                        arquivo="{arquivo}" WHERE imdb="{imdb}";''';
+                        bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
+                    else:
+                        comando = f'''  UPDATE filmes.filmes SET tamanho=0, codificado=0, pasta=NULL, arquivo=NULL WHERE imdb="{imdb}";''';
                         bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
                 else:
                     comando = f'''  INSERT INTO filmes.filmes (nome, imdb, tamanho, codificado, pasta, arquivo)
@@ -146,6 +150,7 @@ def codificacaoDeFilmes_Banco(cursor,cnxn,maior:bool = True) -> None:
 #-----------------------    
 if __name__ == '__main__':
     [cnxn,cursor] = bd.conexao(host=dzn.host,user=dzn.user,password=dzn.password,database=dzn.databaseFilmes);
-    codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor,maior=False);
+    codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor);
+    # atualizarBanco(cursor,cnxn);
     bd.desconexao(cnxn=cnxn,cursor=cursor);
 #-----------------------
