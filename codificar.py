@@ -74,9 +74,9 @@ def atualizarBancoLocal(cursor,cnxn):
                 comando = f'SELECT tamanho from filmes WHERE  imdb="{imdb}";';
                 retorno = bd.read(comando=comando,cursor=cursor);
                 if retorno != []:
-                    retorno = retorno[0];
-                    tmh = int(retorno[0]);
-                    if tmh > TAMANHO_MINIMO:
+                    if os.path.getsize(localDoArquivo) > TAMANHO_MINIMO:
+                        if imdb == "tt0071562":
+                            print('oi');
                         comando = f'''  UPDATE filmes.filmes SET tamanho={os.path.getsize(localDoArquivo)},pasta="{pasta_filme}", 
                                         arquivo="{arquivo}" WHERE imdb="{imdb}";''';
                         bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
@@ -175,7 +175,9 @@ def codificacaoDeFilmes_Banco(cursor,cnxn,maior:bool = True) -> None:
 #-----------------------    
 if __name__ == '__main__':
     [cnxn,cursor] = bd.conexao(host=dzn.host,user=dzn.user,password=dzn.password,database=dzn.databaseFilmes);
-    codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor);
+    codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor,maior=False);
     # atualizarBancoCsv(cursor,cnxn);
+    # atualizarBancoLocal(cursor=cursor,cnxn=cnxn);
+    # limparPastasTmp(cursor=cursor,cnxn=cnxn);
     bd.desconexao(cnxn=cnxn,cursor=cursor);
 #-----------------------
