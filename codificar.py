@@ -79,8 +79,6 @@ def atualizarBancoLocal(cursor,cnxn):
                 retorno = bd.read(comando=comando,cursor=cursor);
                 if retorno != []:
                     if os.path.getsize(localDoArquivo) > TAMANHO_MINIMO:
-                        if imdb == "tt0071562":
-                            print('oi');
                         comando = f'''  UPDATE filmes.filmes SET tamanho={os.path.getsize(localDoArquivo)},pasta="{pasta_filme}", 
                                         arquivo="{arquivo}" WHERE imdb="{imdb}";''';
                         bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
@@ -121,11 +119,11 @@ def codificacao(localDoArquivo:str = '',tmpArq:str = '',pasta:str = '',tmpPasta:
     if(os.path.getsize(f'{localDoArquivo}') >= TAMANHO_MINIMO):
         os.system(f'mkdir "{tmpPasta}"');
         if(CODIFICADOR == 'HEVC'):
-            linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v hevc_nvenc -c:a copy "{tmpArq}"';
+            linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v hevc_nvenc -c:a copy "{tmpArq}" > "{pasta}Log.txt"';
         elif(CODIFICADOR == 'H265'):
-            linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v libx265 -c:a copy "{tmpArq}"';
+            linhaDeComando = f'ffmpeg -i "{localDoArquivo}" -c:v libx265 -c:a copy "{tmpArq}" > "{pasta}Log.txt"';
         else:
-            linhaDeComando = f'''ffmpeg -hwaccel cuda -hwaccel_output_format cuda -i "{localDoArquivo}" -c:v h264_nvenc -crf 20 -c:a copy "{tmpArq}"''';
+            linhaDeComando = f'''ffmpeg -hwaccel cuda -hwaccel_output_format cuda -i "{localDoArquivo}" -c:v h264_nvenc -crf 20 -c:a copy "{tmpArq}" > "{pasta}Log.txt"''';
         os.system("clear");
         print(linhaDeComando);
         os.system(linhaDeComando);
