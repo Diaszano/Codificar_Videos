@@ -179,9 +179,13 @@ def codificacaoDeFilmes_Banco(cursor,cnxn,maior:bool = True) -> None:
 #-----------------------    
 if __name__ == '__main__':
     [cnxn,cursor] = bd.conexao(host=dzn.host,user=dzn.user,password=dzn.password,database=dzn.databaseFilmes);
-    codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor,maior=False);
-    # atualizarBancoCsv(cursor,cnxn);
-    # atualizarBancoLocal(cursor=cursor,cnxn=cnxn);
-    # limparPastasTmp(cursor=cursor,cnxn=cnxn);
+    if True:
+        codificacaoDeFilmes_Banco(cnxn=cnxn,cursor=cursor,maior=False);
+    else:
+        limparPastasTmp(cursor=cursor,cnxn=cnxn);
+        if False:
+            atualizarBancoCsv(cursor,cnxn);
+        else:   
+            atualizarBancoLocal(cursor=cursor,cnxn=cnxn);
     bd.desconexao(cnxn=cnxn,cursor=cursor);
 #-----------------------
