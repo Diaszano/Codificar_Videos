@@ -54,9 +54,13 @@ def limparPastasTmp(cursor,cnxn):
             retorno                 = retorno[0];
             [pasta,arquivo,imdb]    = [retorno[0],retorno[1],retorno[2]];
             tmpPasta                = f'{pasta}tmp/';
+            arquivoLocal            = f'{pasta}{arquivo}';
             if(os.path.exists(f'{tmpPasta}')):
                 os.system(f'rm -r "{tmpPasta}"');
-                print(f"Pasta {tmpPasta} excluída");
+                print(f"Pasta temporária {tmpPasta} excluída");
+            if(os.path.getsize(arquivoLocal) <= TAMANHO_MINIMO):
+                os.system(f'rm -r "{pasta[:len(pasta)-1]}"');
+                print(f"Pasta {pasta[:len(pasta)-1]} excluída");
             comando = f'UPDATE filmes.filmes SET codificado={i+3} WHERE imdb="{imdb}";';
             bd.update(comando=comando,cnxn=cnxn,cursor=cursor);
             comando = f"SELECT pasta, arquivo,imdb FROM filmes WHERE  codificado = {i} and tamanho != 0 ORDER BY tamanho LIMIT 1;";
